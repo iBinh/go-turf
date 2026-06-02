@@ -175,6 +175,45 @@ func getOpts(options []GridOptions) GridOptions {
 	return GridOptions{Properties: map[string]any{}}
 }
 
+func RectangleGrid(bbox []float64, cellWidth, cellHeight float64, units measurement.Unit, options ...GridOptions) (*geojson.FeatureCollection, error) {
+	if err := validBBox(bbox); err != nil {
+		return nil, err
+	}
+	if cellWidth <= 0 || cellHeight <= 0 {
+		return nil, fmt.Errorf("cellWidth and cellHeight must be positive")
+	}
+	cellWidthDeg := measurement.ConvertLength(cellWidth, units, measurement.UnitDegrees)
+	cellHeightDeg := measurement.ConvertLength(cellHeight, units, measurement.UnitDegrees)
+
+	centerY := (bbox[1] + bbox[3]) / 2
+	latCorr := math.Cos(centerY * math.Pi / 180)
+	if latCorr <= 0 {
+		latCorr = 1
+	}
+	cellWidthDeg /= latCorr
+
+	opts := GridOptions{Properties: map[string]any{}}
+	if len(options) > 0 {
+		opts = options[0]
+	}
+
+	var features []*geojson.Feature
+	for x := bbox[0]; x < bbox[2]; x += cellWidthDeg {
+		for y := bbox[1]; y < bbox[3]; y += cellHeightDeg {
+			x1 := math.Min(x+cellWidthDeg, bbox[2])
+			y1 := math.Min(y+cellHeightDeg, bbox[3])
+			ring := []geojson.Position{
+				{x, y}, {x1, y}, {x1, y1}, {x, y1}, {x, y},
+			}
+			features = append(features, geojson.NewFeature(
+				geojson.NewPolygon([][]geojson.Position{ring}),
+				opts.Properties,
+			))
+		}
+	}
+	return geojson.NewFeatureCollection(features), nil
+}
+
 func adjustCellSide(cellSide, centerY float64) float64 {
 	cellSide = cellSide / math.Cos(centerY*math.Pi/180)
 	if math.IsInf(cellSide, 0) || math.IsNaN(cellSide) {

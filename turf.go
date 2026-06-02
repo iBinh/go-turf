@@ -3,21 +3,42 @@ package turf
 import (
 	"github.com/ibinh/turf-go/bbox"
 	"github.com/ibinh/turf-go/boolean"
+	"github.com/ibinh/turf-go/buffer"
 	"github.com/ibinh/turf-go/center"
 	"github.com/ibinh/turf-go/clusters"
+	"github.com/ibinh/turf-go/concave"
+	"github.com/ibinh/turf-go/convert"
 	"github.com/ibinh/turf-go/data"
+	"github.com/ibinh/turf-go/directional_mean"
+	"github.com/ibinh/turf-go/distance_weight"
 	"github.com/ibinh/turf-go/geojson"
 	"github.com/ibinh/turf-go/grid"
 	"github.com/ibinh/turf-go/helpers"
 	"github.com/ibinh/turf-go/interpolation"
 	"github.com/ibinh/turf-go/isobands"
 	"github.com/ibinh/turf-go/isolines"
+	"github.com/ibinh/turf-go/kinks"
+	"github.com/ibinh/turf-go/lineoffset"
+	"github.com/ibinh/turf-go/lines"
+	"github.com/ibinh/turf-go/mask"
 	"github.com/ibinh/turf-go/measurement"
 	"github.com/ibinh/turf-go/meta"
+	"github.com/ibinh/turf-go/misc"
+	"github.com/ibinh/turf-go/moran_index"
+	"github.com/ibinh/turf-go/nearest_neighbor"
 	"github.com/ibinh/turf-go/polyclip"
+	"github.com/ibinh/turf-go/polygonize"
+	"github.com/ibinh/turf-go/quadrat_analysis"
+	"github.com/ibinh/turf-go/rbush"
 	"github.com/ibinh/turf-go/shapes"
+	"github.com/ibinh/turf-go/shortest_path"
 	"github.com/ibinh/turf-go/simplify"
+	"github.com/ibinh/turf-go/smooth"
+	"github.com/ibinh/turf-go/standard_deviational_ellipse"
+	"github.com/ibinh/turf-go/tangents"
 	"github.com/ibinh/turf-go/transform"
+	"github.com/ibinh/turf-go/unkink"
+	"github.com/ibinh/turf-go/voronoi"
 )
 
 type Unit = measurement.Unit
@@ -310,8 +331,16 @@ func Valid(geom any) (bool, error) {
 	return boolean.Valid(geom)
 }
 
-func Concave(geom any) (bool, error) {
+func BooleanConcave(geom any) (bool, error) {
 	return boolean.Concave(geom)
+}
+
+func BooleanEqual(geom1, geom2 any) (bool, error) {
+	return boolean.BooleanEqual(geom1, geom2)
+}
+
+func BooleanParallel(line1, line2 any) (bool, error) {
+	return boolean.BooleanParallel(line1, line2)
 }
 
 type GridOptions = grid.GridOptions
@@ -451,4 +480,184 @@ type IsolinesOptions = isolines.IsolinesOptions
 
 func Isolines(points *geojson.FeatureCollection, options ...isolines.IsolinesOptions) (*geojson.FeatureCollection, error) {
 	return isolines.Isolines(points, options...)
+}
+
+// --- NEWLY ADDED RE-EXPORTS ---
+
+func Clone(geom any) (*geojson.Feature, error) {
+	return misc.Clone(geom)
+}
+
+func Combine(fc *geojson.FeatureCollection) (*geojson.FeatureCollection, error) {
+	return misc.Combine(fc)
+}
+
+func Explode(geom any) (*geojson.FeatureCollection, error) {
+	return misc.Explode(geom)
+}
+
+func Flatten(geom any) (*geojson.FeatureCollection, error) {
+	return misc.Flatten(geom)
+}
+
+func Planepoint(point any, triangle any) (float64, error) {
+	return misc.Planepoint(point, triangle)
+}
+
+func PointsWithinPolygon(points, polygon any) (*geojson.FeatureCollection, error) {
+	return misc.PointsWithinPolygon(points, polygon)
+}
+
+func Tesselate(poly any) (*geojson.FeatureCollection, error) {
+	return misc.Tesselate(poly)
+}
+
+func Buffer(geom any, radius float64, units measurement.Unit, steps ...int) (*geojson.Feature, error) {
+	return buffer.Buffer(geom, radius, units, steps...)
+}
+
+func LineOffset(line any, distance float64, units measurement.Unit) (*geojson.Feature, error) {
+	return lineoffset.LineOffset(line, distance, units)
+}
+
+func PolygonToLine(poly any) (*geojson.Feature, error) {
+	return convert.PolygonToLine(poly)
+}
+
+func LineToPolygon(line any) (*geojson.Feature, error) {
+	return convert.LineToPolygon(line)
+}
+
+func PolygonSmooth(poly any, iterations int) (*geojson.Feature, error) {
+	return smooth.PolygonSmooth(poly, iterations)
+}
+
+func PolygonTangents(point any, polygon any) (*geojson.FeatureCollection, error) {
+	return tangents.PolygonTangents(point, polygon)
+}
+
+func Kinks(geom any) (*geojson.FeatureCollection, error) {
+	return kinks.Kinks(geom)
+}
+
+func Mask(outer any, inner any) (*geojson.Feature, error) {
+	return mask.Mask(outer, inner)
+}
+
+func UnkinkPolygon(poly any) (*geojson.FeatureCollection, error) {
+	return unkink.UnkinkPolygon(poly)
+}
+
+type VoronoiOptions = voronoi.VoronoiOptions
+
+func Voronoi(points *geojson.FeatureCollection, options ...voronoi.VoronoiOptions) (*geojson.FeatureCollection, error) {
+	return voronoi.Voronoi(points, options...)
+}
+
+func LineIntersect(line1, line2 any) (*geojson.FeatureCollection, error) {
+	return lines.LineIntersect(line1, line2)
+}
+
+func LineSegment(geom any) (*geojson.FeatureCollection, error) {
+	return lines.LineSegment(geom)
+}
+
+func LineOverlap(line1, line2 any) (*geojson.FeatureCollection, error) {
+	return lines.LineOverlap(line1, line2)
+}
+
+func LineSlice(point1, point2, line any) (*geojson.Feature, error) {
+	return lines.LineSlice(point1, point2, line)
+}
+
+func LineSliceAlong(line any, startDist, endDist float64, units measurement.Unit) (*geojson.Feature, error) {
+	return lines.LineSliceAlong(line, startDist, endDist, units)
+}
+
+func LineChunk(line any, segmentLength float64, units measurement.Unit) (*geojson.FeatureCollection, error) {
+	return lines.LineChunk(line, segmentLength, units)
+}
+
+func LineSplit(line any, point any) (*geojson.FeatureCollection, error) {
+	return lines.LineSplit(line, point)
+}
+
+func LineArc(center any, radius float64, bearing1, bearing2 float64, steps int, units measurement.Unit) (*geojson.Feature, error) {
+	return lines.LineArc(center, radius, bearing1, bearing2, steps, units)
+}
+
+func Sector(center any, radius float64, bearing1, bearing2 float64, steps int, units measurement.Unit) (*geojson.Feature, error) {
+	return lines.Sector(center, radius, bearing1, bearing2, steps, units)
+}
+
+// --- NEW MODULES ---
+
+func Angle(startPt, midPt, endPt any) (float64, error) {
+	return measurement.Angle(startPt, midPt, endPt)
+}
+
+type ConcaveOptions = concave.ConcaveOptions
+
+func ConcaveHull(points *geojson.FeatureCollection, options ...concave.ConcaveOptions) (*geojson.Feature, error) {
+	return concave.ConcaveHull(points, options...)
+}
+
+func DirectionalMean(geom any) (float64, error) {
+	return directionalmean.DirectionalMean(geom)
+}
+
+func DistanceWeight(points *geojson.FeatureCollection, options ...float64) ([][]float64, error) {
+	return distanceweight.DistanceWeight(points, options...)
+}
+
+func MoranIndex(points *geojson.FeatureCollection, property string) (float64, error) {
+	return moranindex.MoranIndex(points, property)
+}
+
+type NearestNeighborResult = nearestneighbor.NearestNeighborResult
+
+func NearestNeighborAnalysis(points *geojson.FeatureCollection) (*nearestneighbor.NearestNeighborResult, error) {
+	return nearestneighbor.NearestNeighborAnalysis(points)
+}
+
+func NearestPointToLine(line any, points *geojson.FeatureCollection, units ...measurement.Unit) (*geojson.Feature, error) {
+	return measurement.NearestPointToLine(line, points, units...)
+}
+
+func PointOnFeature(geom any) (*geojson.Feature, error) {
+	return center.PointOnFeature(geom)
+}
+
+func PointToPolygonDistance(point, polygon any, units ...measurement.Unit) (float64, error) {
+	return measurement.PointToPolygonDistance(point, polygon, units...)
+}
+
+func Polygonize(geom any) (*geojson.FeatureCollection, error) {
+	return polygonize.Polygonize(geom)
+}
+
+func RectangleGrid(bbox []float64, cellWidth, cellHeight float64, units measurement.Unit, options ...grid.GridOptions) (*geojson.FeatureCollection, error) {
+	return grid.RectangleGrid(bbox, cellWidth, cellHeight, units, options...)
+}
+
+type QuadratAnalysisResult = quadratanalysis.QuadratAnalysisResult
+
+func QuadratAnalysis(points *geojson.FeatureCollection, gridSize int) (*quadratanalysis.QuadratAnalysisResult, error) {
+	return quadratanalysis.QuadratAnalysis(points, gridSize)
+}
+
+func NewRBush() *rbush.RBush {
+	return rbush.NewRBush()
+}
+
+type ShortestPathOptions = shortestpath.ShortestPathOptions
+
+func ShortestPath(start, end any, network *geojson.FeatureCollection, options ...shortestpath.ShortestPathOptions) (*geojson.Feature, error) {
+	return shortestpath.ShortestPath(start, end, network, options...)
+}
+
+type StandardDeviationalEllipseResult = standarddeviationalellipse.StandardDeviationalEllipseResult
+
+func StandardDeviationalEllipse(points *geojson.FeatureCollection, options ...int) (*standarddeviationalellipse.StandardDeviationalEllipseResult, error) {
+	return standarddeviationalellipse.StandardDeviationalEllipse(points, options...)
 }

@@ -134,6 +134,39 @@ func NearestPoint(targetPoint any, points any) (*geojson.Feature, error) {
 	return nearest, nil
 }
 
+func NearestPointToLine(line any, points *geojson.FeatureCollection, units ...Unit) (*geojson.Feature, error) {
+	if points == nil {
+		return nil, fmt.Errorf("points are required")
+	}
+	unit := UnitKilometers
+	if len(units) > 0 {
+		unit = units[0]
+	}
+
+	var nearest *geojson.Feature
+	minDist := math.MaxFloat64
+
+	for _, f := range points.Features {
+		d, err := PointToLineDistance(f, line, unit)
+		if err != nil {
+			continue
+		}
+		if d < minDist {
+			minDist = d
+			nearest = f
+		}
+	}
+	if nearest == nil {
+		return nil, fmt.Errorf("no nearest point found")
+	}
+
+	if nearest.Properties == nil {
+		nearest.Properties = map[string]any{}
+	}
+	nearest.Properties["dist"] = minDist
+	return nearest, nil
+}
+
 func extractFeatures(obj any) ([]*geojson.Feature, error) {
 	switch v := obj.(type) {
 	case *geojson.FeatureCollection:

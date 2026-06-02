@@ -27,6 +27,38 @@ func Bearing(from, to any) (float64, error) {
 	return math.Mod(bearing+360, 360), nil
 }
 
+// Angle computes the interior angle between three points (start->mid->end).
+// Returns angle in decimal degrees (0-180).
+func Angle(startPt, midPt, endPt any, options ...any) (float64, error) {
+	start, err := geojson.GetCoord(startPt)
+	if err != nil {
+		return 0, fmt.Errorf("angle start: %w", err)
+	}
+	mid, err := geojson.GetCoord(midPt)
+	if err != nil {
+		return 0, fmt.Errorf("angle mid: %w", err)
+	}
+	end, err := geojson.GetCoord(endPt)
+	if err != nil {
+		return 0, fmt.Errorf("angle end: %w", err)
+	}
+
+	bearing1, err := Bearing(mid, start)
+	if err != nil {
+		return 0, err
+	}
+	bearing2, err := Bearing(mid, end)
+	if err != nil {
+		return 0, err
+	}
+
+	angle := math.Abs(bearing2 - bearing1)
+	if angle > 180 {
+		angle = 360 - angle
+	}
+	return angle, nil
+}
+
 func RhumbBearing(from, to any) (float64, error) {
 	fromCoord, err := geojson.GetCoord(from)
 	if err != nil {
