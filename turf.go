@@ -10,6 +10,8 @@ import (
 	"github.com/ibinh/turf-go/grid"
 	"github.com/ibinh/turf-go/helpers"
 	"github.com/ibinh/turf-go/interpolation"
+	"github.com/ibinh/turf-go/isobands"
+	"github.com/ibinh/turf-go/isolines"
 	"github.com/ibinh/turf-go/measurement"
 	"github.com/ibinh/turf-go/meta"
 	"github.com/ibinh/turf-go/polyclip"
@@ -437,4 +439,16 @@ func PolygonDifference(poly1, poly2 any) (*geojson.Feature, error) {
 
 func PolygonXor(poly1, poly2 any) (*geojson.Feature, error) {
 	return polyclip.PolygonXor(poly1, poly2)
+}
+
+type IsobandsOptions = isobands.IsobandsOptions
+
+func Isobands(points *geojson.FeatureCollection, options ...isobands.IsobandsOptions) (*geojson.FeatureCollection, error) {
+	return isobands.Isobands(points, options...)
+}
+
+type IsolinesOptions = isolines.IsolinesOptions
+
+func Isolines(points *geojson.FeatureCollection, options ...isolines.IsolinesOptions) (*geojson.FeatureCollection, error) {
+	return isolines.Isolines(points, options...)
 }

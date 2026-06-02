@@ -1,7 +1,9 @@
 package boolean
 
 import (
+	"fmt"
 	"math"
+	"reflect"
 	"github.com/ibinh/turf-go/geojson"
 )
 
@@ -881,4 +883,55 @@ func Concave(geom any) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func BooleanEqual(geom1, geom2 any) (bool, error) {
+	coords1, err := geojson.GetCoords(geom1)
+	if err != nil {
+		return false, err
+	}
+	coords2, err := geojson.GetCoords(geom2)
+	if err != nil {
+		return false, err
+	}
+	return reflect.DeepEqual(coords1, coords2), nil
+}
+
+func BooleanParallel(line1, line2 any) (bool, error) {
+	coords1, err := geojson.GetCoords(line1)
+	if err != nil {
+		return false, err
+	}
+	coords2, err := geojson.GetCoords(line2)
+	if err != nil {
+		return false, err
+	}
+
+	var pts1, pts2 []geojson.Position
+	switch c := coords1.(type) {
+	case []geojson.Position:
+		pts1 = c
+	default:
+		return false, fmt.Errorf("booleanParallel: expected LineString coordinates")
+	}
+	switch c := coords2.(type) {
+	case []geojson.Position:
+		pts2 = c
+	default:
+		return false, fmt.Errorf("booleanParallel: expected LineString coordinates")
+	}
+
+	if len(pts1) < 2 || len(pts2) < 2 {
+		return false, fmt.Errorf("booleanParallel: each line must have at least 2 vertices")
+	}
+
+	for i := 0; i < len(pts1)-1; i++ {
+		v1 := geojson.Position{pts1[i+1][0] - pts1[i][0], pts1[i+1][1] - pts1[i][1]}
+		v2 := geojson.Position{pts2[i+1][0] - pts2[i][0], pts2[i+1][1] - pts2[i][1]}
+		cross := v1[0]*v2[1] - v1[1]*v2[0]
+		if math.Abs(cross) > 1e-10 {
+			return false, nil
+		}
+	}
+	return true, nil
 }

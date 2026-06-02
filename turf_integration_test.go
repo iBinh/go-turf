@@ -449,6 +449,58 @@ func TestIntegrationRhumbDistance(t *testing.T) {
 	}
 }
 
+func TestIntegrationIsobands(t *testing.T) {
+	pts := make([]*geojson.Feature, 25)
+	for j := 0; j < 5; j++ {
+		for i := 0; i < 5; i++ {
+			idx := j*5 + i
+			pts[idx] = geojson.NewFeature(
+				geojson.NewPoint([]float64{float64(i), float64(j)}),
+				map[string]any{"z": float64(idx)},
+			)
+		}
+	}
+	fc := geojson.NewFeatureCollection(pts)
+	result, err := Isobands(fc, IsobandsOptions{ZProperty: "z", Breaks: []float64{0, 10, 20}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Features) == 0 {
+		t.Error("expected at least 1 band")
+	}
+	for _, f := range result.Features {
+		if f.Geometry.Type() != geojson.TypePolygon {
+			t.Errorf("expected Polygon band, got %s", f.Geometry.Type())
+		}
+	}
+}
+
+func TestIntegrationIsolines(t *testing.T) {
+	pts := make([]*geojson.Feature, 25)
+	for j := 0; j < 5; j++ {
+		for i := 0; i < 5; i++ {
+			idx := j*5 + i
+			pts[idx] = geojson.NewFeature(
+				geojson.NewPoint([]float64{float64(i), float64(j)}),
+				map[string]any{"z": float64(idx)},
+			)
+		}
+	}
+	fc := geojson.NewFeatureCollection(pts)
+	result, err := Isolines(fc, IsolinesOptions{ZProperty: "z", Breaks: []float64{5, 10, 15}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Features) == 0 {
+		t.Error("expected at least 1 contour line")
+	}
+	for _, f := range result.Features {
+		if f.Geometry.Type() != geojson.TypeLineString {
+			t.Errorf("expected LineString contour, got %s", f.Geometry.Type())
+		}
+	}
+}
+
 func TestIntegrationRhumbDestination(t *testing.T) {
 	origin := geojson.NewPoint([]float64{0, 0})
 	dest, err := RhumbDestination(origin, 111.32, 90)

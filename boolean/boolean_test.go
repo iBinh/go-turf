@@ -521,6 +521,110 @@ func TestClockwiseEdge(t *testing.T) {
 	}
 }
 
+func TestBooleanEqual(t *testing.T) {
+	l1 := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 10}})
+	l2 := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 10}})
+	l3 := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 0}})
+
+	eq, err := BooleanEqual(l1, l2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !eq {
+		t.Error("identical lines should be equal")
+	}
+
+	eq, err = BooleanEqual(l1, l3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if eq {
+		t.Error("different lines should not be equal")
+	}
+}
+
+func TestBooleanEqualPoint(t *testing.T) {
+	p1 := geojson.NewPoint(pt(5, 5))
+	p2 := geojson.NewPoint(pt(5, 5))
+	p3 := geojson.NewPoint(pt(6, 6))
+
+	eq, err := BooleanEqual(p1, p2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !eq {
+		t.Error("identical points should be equal")
+	}
+
+	eq, err = BooleanEqual(p1, p3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if eq {
+		t.Error("different points should not be equal")
+	}
+}
+
+func TestBooleanEqualPolygon(t *testing.T) {
+	p1 := geojson.NewPolygon([][]geojson.Position{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}})
+	p2 := geojson.NewPolygon([][]geojson.Position{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}})
+	eq, err := BooleanEqual(p1, p2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !eq {
+		t.Error("identical polygons should be equal")
+	}
+}
+
+func TestBooleanParallel(t *testing.T) {
+	l1 := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 0}})
+	l2 := geojson.NewLineString([]geojson.Position{{0, 5}, {10, 5}})
+	parallel, err := BooleanParallel(l1, l2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !parallel {
+		t.Error("horizontal lines should be parallel")
+	}
+}
+
+func TestBooleanParallelNotParallel(t *testing.T) {
+	l1 := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 0}})
+	l2 := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 10}})
+	parallel, err := BooleanParallel(l1, l2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if parallel {
+		t.Error("non-parallel lines should not be parallel")
+	}
+}
+
+func TestBooleanParallelDiagonal(t *testing.T) {
+	l1 := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 10}})
+	l2 := geojson.NewLineString([]geojson.Position{{0, 5}, {10, 15}})
+	parallel, err := BooleanParallel(l1, l2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !parallel {
+		t.Error("diagonal lines with same slope should be parallel")
+	}
+}
+
+func TestBooleanEqualFeature(t *testing.T) {
+	f1 := geojson.NewFeature(geojson.NewPoint(pt(1, 2)), nil)
+	f2 := geojson.NewFeature(geojson.NewPoint(pt(1, 2)), nil)
+	eq, err := BooleanEqual(f1, f2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !eq {
+		t.Error("features with identical geometry should be equal")
+	}
+}
+
 func TestConcaveNonPolygon(t *testing.T) {
 	line := geojson.NewLineString([]geojson.Position{{0, 0}, {1, 1}})
 	result, err := Concave(line)
