@@ -104,10 +104,7 @@ func Polygonize(geom any) (*geojson.FeatureCollection, error) {
 		}
 
 		// Build polygon with holes
-		coords := [][]geojson.Position{ring}
-		for _, h := range holes {
-			coords = append(coords, h)
-		}
+		coords := append([][]geojson.Position{ring}, holes...)
 
 		poly := geojson.NewPolygon(coords)
 		features = append(features, geojson.NewFeature(poly, nil))

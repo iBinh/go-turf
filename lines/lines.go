@@ -408,10 +408,7 @@ func isPointOnSegment(p, a, b geojson.Position) bool {
 		return false
 	}
 	lenSq := (b[0]-a[0])*(b[0]-a[0]) + (b[1]-a[1])*(b[1]-a[1])
-	if dot-lenSq > 1e-10 {
-		return false
-	}
-	return true
+	return dot-lenSq <= 1e-10
 }
 
 func LineArc(center any, radius float64, bearing1, bearing2 float64, steps int, units measurement.Unit) (*geojson.Feature, error) {

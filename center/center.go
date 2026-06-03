@@ -1,8 +1,6 @@
 package center
 
 import (
-	"math"
-
 	"github.com/ibinh/turf-go/bbox"
 	"github.com/ibinh/turf-go/geojson"
 	"github.com/ibinh/turf-go/meta"
@@ -148,19 +146,4 @@ func CenterOfMass(obj any) (*geojson.Feature, error) {
 
 type Position = geojson.Position
 
-func centerFromBounds(bbox []float64) (float64, float64) {
-	return (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
-}
 
-func pointDistance(p1, p2 Position) float64 {
-	lat1 := p1[1] * math.Pi / 180
-	lat2 := p2[1] * math.Pi / 180
-	dlat := lat2 - lat1
-	dlon := (p2[0] - p1[0]) * math.Pi / 180
-
-	a := math.Sin(dlat/2)*math.Sin(dlat/2) +
-		math.Cos(lat1)*math.Cos(lat2)*
-			math.Sin(dlon/2)*math.Sin(dlon/2)
-	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-	return 6371008 * c
-}

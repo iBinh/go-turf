@@ -2,7 +2,6 @@ package geojson
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type Position []float64
@@ -327,26 +326,6 @@ func (fc *FeatureCollection) Type() string           { return fc.typeName }
 func (fc *FeatureCollection) SetType(t string)       { fc.typeName = t }
 func (fc *FeatureCollection) BBox() []float64        { return fc.bbox }
 func (fc *FeatureCollection) SetBBox(b []float64)    { fc.bbox = b }
-
-func validatePosition(p Position) error {
-	if len(p) < 2 {
-		return fmt.Errorf("position must have at least 2 elements, got %d", len(p))
-	}
-	return nil
-}
-
-func validateLinearRing(ring []Position) error {
-	if len(ring) < 4 {
-		return fmt.Errorf("linear ring must have at least 4 positions, got %d", len(ring))
-	}
-	first, last := ring[0], ring[len(ring)-1]
-	for i := range first {
-		if first[i] != last[i] {
-			return fmt.Errorf("linear ring is not closed: first %v, last %v", first, last)
-		}
-	}
-	return nil
-}
 
 type GeoJSON interface {
 	Type() string

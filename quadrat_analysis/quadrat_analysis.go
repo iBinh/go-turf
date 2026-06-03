@@ -126,8 +126,7 @@ func regularizedGammaP(a, x float64) float64 {
 	if math.Abs(f) < 1e-15 {
 		f = 1e-15
 	}
-	var c float64 = 1 / f
-	var d float64 = 1 / f
+	var c, d float64
 	for i := 1; i <= 100; i++ {
 		f = 1 + float64(i)*(1-a)/x
 		if math.Abs(f) < 1e-15 {

@@ -170,10 +170,7 @@ func isPointOnSegment(p, a, b geojson.Position) bool {
 		return false
 	}
 	lenSq := (b[0]-a[0])*(b[0]-a[0]) + (b[1]-a[1])*(b[1]-a[1])
-	if dot-lenSq > 1e-10 {
-		return false
-	}
-	return true
+	return dot-lenSq <= 1e-10
 }
 
 func SegmentIntersect(a, b, c, d geojson.Position) bool {
@@ -209,10 +206,7 @@ func collinearSegmentIntersect(a, b, c, d geojson.Position) bool {
 		t1, t2 = t2, t1
 	}
 
-	if t2 < 0 || t1 > 1.0 {
-		return false
-	}
-	return true
+	return t2 >= 0 && t1 <= 1.0
 }
 
 func Contains(geom1, geom2 any) (bool, error) {

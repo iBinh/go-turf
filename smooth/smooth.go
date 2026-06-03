@@ -66,11 +66,6 @@ func chaikinStep(ring []geojson.Position) []geojson.Position {
 	var result []geojson.Position
 
 	last := n - 1
-	if closed {
-		last = n - 1
-	} else {
-		last = n - 1
-	}
 
 	for i := 0; i < last; i++ {
 		curr := ring[i]

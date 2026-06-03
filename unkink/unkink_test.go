@@ -6,10 +6,6 @@ import (
 	"github.com/ibinh/turf-go/geojson"
 )
 
-func pt(lng, lat float64) geojson.Position {
-	return geojson.Position{lng, lat}
-}
-
 func TestUnkinkPolygonNoKinks(t *testing.T) {
 	poly := geojson.NewPolygon([][]geojson.Position{
 		{{0, 0}, {10, 0}, {10, 10}, {0, 10}, {0, 0}},

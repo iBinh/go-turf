@@ -382,9 +382,7 @@ func findAllIntersections(ptsA, ptsB []geojson.Position) []isectInfo {
 
 			// Check collinear overlap
 			if co := collinearOverlap(a, b, c, d); len(co) > 0 {
-				for _, ci := range co {
-					result = append(result, ci)
-				}
+				result = append(result, co...)
 				continue
 			}
 

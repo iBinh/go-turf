@@ -20,9 +20,6 @@ func radToDeg(r float64) float64 { return r * 180 / math.Pi }
 
 func degToRad(d float64) float64 { return d * math.Pi / 180 }
 
-func toRadians(coord float64) float64 { return coord * math.Pi / 180 }
-
-func toDegrees(coord float64) float64 { return coord * 180 / math.Pi }
 
 func ConvertLength(length float64, from, to Unit) float64 {
 	return convertLength(length, from, to)

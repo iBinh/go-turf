@@ -63,9 +63,7 @@ func Combine(fc *geojson.FeatureCollection) (*geojson.FeatureCollection, error) 
 			}
 			out = append(out, geojson.NewFeature(geojson.NewMultiPolygon(polys), nil))
 		default:
-			for _, f := range features {
-				out = append(out, f)
-			}
+			out = append(out, features...)
 		}
 	}
 	return geojson.NewFeatureCollection(out), nil

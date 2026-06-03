@@ -343,8 +343,5 @@ func PlanarPointOnLine(pt, start, end geojson.Position) bool {
 		return false
 	}
 	lenSq := dx*dx + dy*dy
-	if dot > lenSq {
-		return false
-	}
-	return true
+	return dot <= lenSq
 }

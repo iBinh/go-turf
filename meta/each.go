@@ -65,11 +65,11 @@ func CoordReduce[T any](obj any, fn func(acc T, coord geojson.Position, index in
 
 func coordReduce[T any](geom geojson.Geometry, initial T, fn func(T, geojson.Position, int) (T, error)) (T, error) {
 	acc := initial
-	idx := 0
+	var idx int
 
 	switch g := geom.(type) {
 	case *geojson.Point:
-		acc, idx = callFn(acc, g.Coordinates, 0, fn)
+		acc, _ = callFn(acc, g.Coordinates, 0, fn)
 		return acc, nil
 	case *geojson.MultiPoint:
 		for _, c := range g.Coordinates {

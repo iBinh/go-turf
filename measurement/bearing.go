@@ -74,7 +74,7 @@ func RhumbBearing(from, to any) (float64, error) {
 	dlon := degToRad(toCoord[0] - fromCoord[0])
 
 	dPhi := math.Log(math.Tan(lat2/2+math.Pi/4) / math.Tan(lat1/2+math.Pi/4))
-	q := dPhi
+	var q float64
 	if math.Abs(dPhi) > 1e-10 {
 		q = (lat2 - lat1) / dPhi
 	} else {
