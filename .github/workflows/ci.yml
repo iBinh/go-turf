@@ -13,6 +13,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
+          cache: true
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v4
         with:
@@ -28,8 +29,12 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
+          cache: true
+      - run: go build ./...
+      - run: go vet ./...
       - run: go test ./... -v -race -count=1 -coverprofile=coverage.txt
       - uses: codecov/codecov-action@v4
+        continue-on-error: true
         with:
           file: ./coverage.txt
 
@@ -40,4 +45,5 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
-      - run: go test ./... -bench=. -benchmem
+          cache: true
+      - run: go test ./... -bench=. -benchmem -count=1
