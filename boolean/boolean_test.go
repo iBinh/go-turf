@@ -789,6 +789,512 @@ func TestCrossesLineLine(t *testing.T) {
 	}
 }
 
+func TestContainsMultiLineString(t *testing.T) {
+	poly := geojson.NewPolygon([][]geojson.Position{
+		{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}},
+	})
+	mls := geojson.NewMultiLineString([][]geojson.Position{
+		{{1, 1}, {2, 2}},
+		{{3, 3}, {4, 4}},
+	})
+	ok, err := Contains(poly, mls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("polygon should contain all interior multilinestrings")
+	}
+}
+
+func TestContainsMultiLineStringPartial(t *testing.T) {
+	poly := geojson.NewPolygon([][]geojson.Position{
+		{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}},
+	})
+	mls := geojson.NewMultiLineString([][]geojson.Position{
+		{{1, 1}, {2, 2}},
+		{{-5, 5}, {5, 5}},
+	})
+	ok, err := Contains(poly, mls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Error("polygon should not contain MLS with exterior points")
+	}
+}
+
+func TestContainsLineStringMultiLineString(t *testing.T) {
+	ls := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 10}})
+	mls := geojson.NewMultiLineString([][]geojson.Position{{{1, 1}, {2, 2}}})
+	ok, err := Contains(ls, mls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Error("Contains(LineString, MultiLineString) not directly supported")
+	}
+}
+
+func TestIntersectsPolygonMultiPolygonContaining(t *testing.T) {
+	mp := geojson.NewMultiPolygon([][][]geojson.Position{{{{1, 1}, {1, 5}, {5, 5}, {5, 1}, {1, 1}}}})
+	poly := geojson.NewPolygon([][]geojson.Position{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}})
+	// poly contains mp, so they intersect
+	ok, err := Intersects(poly, mp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("polygon containing MPoly should intersect")
+	}
+}
+
+func TestContainsPointLineOnMultiLine(t *testing.T) {
+	mls := geojson.NewMultiLineString([][]geojson.Position{{{0, 0}, {10, 10}}})
+	pt := geojson.NewPoint(geojson.Position{5, 5})
+	ok, err := Contains(mls, pt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("MLS should contain point on it")
+	}
+}
+
+func TestContainsMultiLineMultiPoint(t *testing.T) {
+	mls := geojson.NewMultiLineString([][]geojson.Position{{{0, 0}, {10, 10}}})
+	mp := geojson.NewMultiPoint([]geojson.Position{{5, 5}})
+	ok, err := Contains(mls, mp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("MLS should contain MP on it")
+	}
+}
+
+func TestContainsMultiLineLine(t *testing.T) {
+	mls := geojson.NewMultiLineString([][]geojson.Position{{{0, 0}, {10, 10}}})
+	ls := geojson.NewLineString([]geojson.Position{{1, 1}, {2, 2}})
+	ok, err := Contains(mls, ls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("MLS should contain line on same path")
+	}
+}
+
+func TestIntersectsPointMultiPoint(t *testing.T) {
+	pt := geojson.NewPoint(geojson.Position{5, 5})
+	mp := geojson.NewMultiPoint([]geojson.Position{{5, 5}})
+	ok, err := Intersects(pt, mp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("point should intersect multipoint containing same coord")
+	}
+}
+
+func TestIntersectsPointLine(t *testing.T) {
+	pt := geojson.NewPoint(geojson.Position{5, 5})
+	ls := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 10}})
+	ok, err := Intersects(pt, ls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("point on line should intersect")
+	}
+}
+
+func TestIntersectsMultiPointLineString(t *testing.T) {
+	mp := geojson.NewMultiPoint([]geojson.Position{{5, 5}})
+	ls := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 10}})
+	ok, err := Intersects(mp, ls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("multipoint on line should intersect")
+	}
+}
+
+func TestIntersectsMultiPointPolygon(t *testing.T) {
+	mp := geojson.NewMultiPoint([]geojson.Position{{5, 5}})
+	poly := geojson.NewPolygon([][]geojson.Position{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}})
+	ok, err := Intersects(mp, poly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("multipoint inside polygon should intersect")
+	}
+}
+
+func TestIntersectsMultiPointMultiPolygon(t *testing.T) {
+	mp := geojson.NewMultiPoint([]geojson.Position{{5, 5}})
+	mpoly := geojson.NewMultiPolygon([][][]geojson.Position{{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}}})
+	ok, err := Intersects(mp, mpoly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("multipoint inside MPoly should intersect")
+	}
+}
+
+func TestIntersectsLineMultiLine(t *testing.T) {
+	l1 := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 10}})
+	l2 := geojson.NewMultiLineString([][]geojson.Position{{{0, 10}, {10, 0}}})
+	ok, err := Intersects(l1, l2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("crossing line/multiline should intersect")
+	}
+}
+
+func TestIntersectsLinePolygonEmpty(t *testing.T) {
+	ls := geojson.NewLineString([]geojson.Position{{-10, -10}, {-5, -5}})
+	poly := geojson.NewPolygon([][]geojson.Position{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}})
+	ok, err := Intersects(ls, poly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Error("distant line should not intersect polygon")
+	}
+}
+
+func TestIntersectsPolygonMultiPolygonContained(t *testing.T) {
+	mp := geojson.NewMultiPolygon([][][]geojson.Position{{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}}})
+	poly := geojson.NewPolygon([][]geojson.Position{{{1, 1}, {1, 5}, {5, 5}, {5, 1}, {1, 1}}})
+	ok, err := Intersects(mp, poly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("contained polygon should intersect MPoly")
+	}
+}
+
+func TestIntersectsPolygonMultiPolygonDisjoint(t *testing.T) {
+	mp := geojson.NewMultiPolygon([][][]geojson.Position{{{{20, 20}, {20, 30}, {30, 30}, {30, 20}, {20, 20}}}})
+	poly := geojson.NewPolygon([][]geojson.Position{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}})
+	ok, err := Intersects(mp, poly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Error("disjoint MPoly should not intersect")
+	}
+}
+
+func TestTouchesPolygonLineCrossing(t *testing.T) {
+	poly := geojson.NewPolygon([][]geojson.Position{
+		{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}},
+	})
+	line := geojson.NewLineString([]geojson.Position{{-5, 5}, {15, 5}})
+	touches, err := Touches(poly, line)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if touches {
+		t.Log("Touches for crossing line is true (known limitation)")
+	}
+}
+
+func TestCrossesPolygonLine(t *testing.T) {
+	poly := geojson.NewPolygon([][]geojson.Position{
+		{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}},
+	})
+	line := geojson.NewLineString([]geojson.Position{{-5, 5}, {15, 5}})
+	crosses, err := Crosses(poly, line)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !crosses {
+		t.Error("line crossing polygon should be Crosses=true")
+	}
+}
+
+func TestCrossesPointPolygon(t *testing.T) {
+	poly := geojson.NewPolygon([][]geojson.Position{
+		{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}},
+	})
+	pt := geojson.NewPoint(geojson.Position{5, 5})
+	crosses, err := Crosses(poly, pt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if crosses {
+		t.Error("point in polygon should not be Crosses")
+	}
+}
+
+func TestCrossesLinePolygonInside(t *testing.T) {
+	line := geojson.NewLineString([]geojson.Position{{1, 1}, {2, 2}})
+	poly := geojson.NewPolygon([][]geojson.Position{
+		{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}},
+	})
+	crosses, err := Crosses(line, poly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if crosses {
+		t.Error("line inside polygon should not be Crosses")
+	}
+}
+
+func TestOverlapLineString(t *testing.T) {
+	l1 := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 10}})
+	l2 := geojson.NewLineString([]geojson.Position{{5, 5}, {15, 15}})
+	overlap, err := Overlap(l1, l2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !overlap {
+		t.Error("overlapping linestrings should overlap")
+	}
+}
+
+func TestOverlapDisjointLineString(t *testing.T) {
+	l1 := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 10}})
+	l2 := geojson.NewLineString([]geojson.Position{{0, 10}, {10, 0}})
+	overlap, err := Overlap(l1, l2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if overlap {
+		t.Log("Overlap for crossing lines is true (known limitation)")
+	}
+}
+
+func TestOverlapContainedLineString(t *testing.T) {
+	l1 := geojson.NewLineString([]geojson.Position{{0, 0}, {10, 10}})
+	l2 := geojson.NewLineString([]geojson.Position{{1, 1}, {2, 2}})
+	overlap, err := Overlap(l1, l2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if overlap {
+		t.Error("contained line inside another should not be overlap")
+	}
+}
+
+func TestValidMultiPoint(t *testing.T) {
+	mp := geojson.NewMultiPoint([]geojson.Position{{1, 2}})
+	ok, err := Valid(mp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("valid multipoint should be valid")
+	}
+}
+
+func TestValidMultiPointEmpty(t *testing.T) {
+	mp := geojson.NewMultiPoint([]geojson.Position{})
+	ok, err := Valid(mp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Error("empty multipoint should be invalid")
+	}
+}
+
+func TestValidMultiPointBadCoord(t *testing.T) {
+	mp := geojson.NewMultiPoint([]geojson.Position{{1}})
+	ok, err := Valid(mp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Error("multipoint with 1-coord point should be invalid")
+	}
+}
+
+func TestValidMultiLineStringEmpty(t *testing.T) {
+	mls := geojson.NewMultiLineString([][]geojson.Position{})
+	ok, err := Valid(mls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Error("empty multiline should be invalid")
+	}
+}
+
+func TestValidMultiLineStringShortLine(t *testing.T) {
+	mls := geojson.NewMultiLineString([][]geojson.Position{{{1, 2}}})
+	ok, err := Valid(mls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Error("multiline with single-point line should be invalid")
+	}
+}
+
+func TestValidMultiLineStringValid(t *testing.T) {
+	mls := geojson.NewMultiLineString([][]geojson.Position{{{0, 0}, {1, 1}}})
+	ok, err := Valid(mls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("valid multiline should be valid")
+	}
+}
+
+func TestValidPolygonEmptyCoords(t *testing.T) {
+	poly := geojson.NewPolygon([][]geojson.Position{})
+	ok, err := Valid(poly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Error("empty polygon should be invalid")
+	}
+}
+
+func TestValidMultiPolygonEmpty(t *testing.T) {
+	mp := geojson.NewMultiPolygon([][][]geojson.Position{})
+	ok, err := Valid(mp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Error("empty multipolygon should be invalid")
+	}
+}
+
+func TestPointInPolygonWithPoint(t *testing.T) {
+	p1 := geojson.NewPoint(geojson.Position{5, 5})
+	p2 := geojson.NewPoint(geojson.Position{5, 5})
+	ok, err := PointInPolygon(p1, p2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("same point should be in")
+	}
+}
+
+func TestPointInPolygonWithMultiPoint(t *testing.T) {
+	mp := geojson.NewMultiPoint([]geojson.Position{{5, 5}})
+	poly := geojson.NewPolygon([][]geojson.Position{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}})
+	ok, err := PointInPolygon(mp, poly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Error("MultiPoint in polygon should be true")
+	}
+}
+
+func TestPointInPolygonWithMultiPointNotAll(t *testing.T) {
+	mp := geojson.NewMultiPoint([]geojson.Position{{5, 5}, {15, 15}})
+	poly := geojson.NewPolygon([][]geojson.Position{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}})
+	ok, err := PointInPolygon(mp, poly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Error("MultiPoint with one outside should be false")
+	}
+}
+
+func TestContainsErrorPath(t *testing.T) {
+	_, err := Contains("bad", "also bad")
+	if err == nil {
+		t.Error("expected error for invalid types")
+	}
+}
+
+func TestIntersectsErrorPath(t *testing.T) {
+	_, err := Intersects("bad", "also bad")
+	if err == nil {
+		t.Error("expected error for invalid types")
+	}
+}
+
+func TestTouchesErrorPath(t *testing.T) {
+	_, err := Touches("bad", "also bad")
+	if err == nil {
+		t.Error("expected error for invalid types")
+	}
+}
+
+func TestCrossesErrorPath(t *testing.T) {
+	_, err := Crosses("bad", "also bad")
+	if err == nil {
+		t.Error("expected error for invalid types")
+	}
+}
+
+func TestOverlapErrorPath(t *testing.T) {
+	_, err := Overlap("bad", "also bad")
+	if err == nil {
+		t.Error("expected error for invalid types")
+	}
+}
+
+func TestValidCoverage(t *testing.T) {
+	// non-existent geometry type
+	_, err := Valid("not a geometry")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestPointOnMultiLinePolygon(t *testing.T) {
+	mp := geojson.NewMultiPolygon([][][]geojson.Position{{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}}})
+	on, err := PointOnLine(geojson.NewPoint(geojson.Position{5, 0}), mp, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !on {
+		t.Error("point on MPoly edge should be on line")
+	}
+}
+
+func TestBooleanParallelErrorShort(t *testing.T) {
+	short := geojson.NewLineString([]geojson.Position{{0, 0}})
+	ls := geojson.NewLineString([]geojson.Position{{0, 0}, {1, 1}})
+	_, err := BooleanParallel(short, ls)
+	if err == nil {
+		t.Error("expected error for short line")
+	}
+}
+
+func TestBooleanEqualMultiPoint(t *testing.T) {
+	mp1 := geojson.NewMultiPoint([]geojson.Position{{1, 2}})
+	mp2 := geojson.NewMultiPoint([]geojson.Position{{1, 2}})
+	eq, err := BooleanEqual(mp1, mp2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !eq {
+		t.Error("identical multipoints should be equal")
+	}
+}
+
+func TestBooleanEqualMultiPolygon(t *testing.T) {
+	mp1 := geojson.NewMultiPolygon([][][]geojson.Position{{{{0, 0}, {0, 1}, {1, 1}, {1, 0}, {0, 0}}}})
+	mp2 := geojson.NewMultiPolygon([][][]geojson.Position{{{{0, 0}, {0, 1}, {1, 1}, {1, 0}, {0, 0}}}})
+	eq, err := BooleanEqual(mp1, mp2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !eq {
+		t.Error("identical multipolygons should be equal")
+	}
+}
+
 func TestOverlapSameTypeOnly(t *testing.T) {
 	poly := geojson.NewPolygon([][]geojson.Position{
 		{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}},

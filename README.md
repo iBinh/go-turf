@@ -1,96 +1,154 @@
 # turf-go
 
-**Go port of [Turf.js](https://turfjs.org/)** — a modular geospatial analysis engine.
+<div align="center">
 
-Zero external dependencies. Single module, 39 sub-packages covering the full Turf.js API surface.
+**Go port of [Turf.js](https://turfjs.org/) — advanced geospatial analysis for Go.**
 
-## Packages
+[![Go Version](https://img.shields.io/github/go-mod/go-version/ibinh/go-turf)](https://github.com/ibinh/go-turf)
+[![CI](https://github.com/ibinh/go-turf/actions/workflows/ci.yml/badge.svg)](https://github.com/ibinh/go-turf/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/ibinh/go-turf/branch/master/graph/badge.svg)](https://codecov.io/gh/ibinh/go-turf)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ibinh/go-turf)](https://goreportcard.com/report/github.com/ibinh/go-turf)
+[![License](https://img.shields.io/github/license/ibinh/go-turf)](LICENSE)
 
-| Package | Description |
-|---------|-------------|
-| `geojson` | GeoJSON types (Point, LineString, Polygon, Multi\*, Feature, FeatureCollection, GeometryCollection) with custom JSON marshal/unmarshal, constructors, invariants |
-| `helpers` | Convenience constructors: `Point()`, `LineString()`, `Polygon()`, `MultiPoint()`, etc. |
-| `meta` | Iterators: `CoordEach/Reduce`, `FeatureEach/Reduce`, `GeomEach/Reduce`, `PropEach/Reduce`, `FlattenEach/Reduce` |
-| `measurement` | Haversine/rhumb distance, bearing, destination, length, area, midpoint, along, great-circle, point-to-line-distance, nearest-point-on-line |
-| `bbox` | `BBox`, `BBoxPolygon`, `Envelope`, `Square` |
-| `center` | `Center`, `Centroid`, `CenterMean`, `CenterMedian`, `CenterOfMass` |
-| `transform` | `Rotate`, `Scale`, `ScaleXY`, `Translate`, `Rewind`, `Flip`, `Truncate`, `CleanCoords`, `ToMercator`, `ToWGS84` |
-| `boolean` | `Clockwise`, `PointInPolygon`, `PointOnLine`, `SegmentIntersect`, `Contains`, `Within`, `Intersects`, `Disjoint`, `Touches`, `Crosses`, `Overlap`, `Valid`, `Concave`, `BooleanEqual`, `BooleanParallel` |
-| `grid` | `HexGrid`, `PointGrid`, `SquareGrid`, `TriangleGrid` |
-| `shapes` | `Circle`, `Ellipse`, `BezierSpline`, `RandomPosition`, `RandomPoint`, `RandomLineString`, `RandomPolygon` |
-| `interpolation` | `Sample`, `Tin` (Delaunay), `Interpolate` (IDW), `PlanarDistance`, `PlanarPointOnLine` |
-| `clusters` | `ClustersKMeans`, `ClustersDbscan`, `Dissolve` |
-| `data` | `Tag`, `Collect` |
-| `simplify` | `Simplify` (RDP), `ConvexHull` |
-| `polyclip` | `PolygonUnion`, `PolygonIntersect`, `PolygonDifference`, `PolygonXor` |
-| `lines` | `LineIntersect`, `LineSegment`, `LineOverlap`, `LineSlice`, `LineSliceAlong`, `LineChunk`, `LineSplit`, `LineArc`, `Sector` |
-| `convert` | `PolygonToLine`, `LineToPolygon` |
-| `smooth` | `PolygonSmooth` (Chaikin) |
-| `tangents` | `PolygonTangents` |
-| `lineoffset` | `LineOffset` |
-| `mask` | `Mask` |
-| `unkink` | `UnkinkPolygon` |
-| `voronoi` | `Voronoi` |
-| `buffer` | `Buffer` |
-| `kinks` | `Kinks` (self-intersection detection) |
-| `misc` | `Clone`, `Combine`, `Explode`, `PointsWithinPolygon`, `Planepoint`, `Tesselate`, `Flatten` |
-| `isobands` | `Isobands` — marching squares contour bands |
-| `isolines` | `Isolines` — marching squares contour lines |
-| `concave` | `ConcaveHull` — alpha-shapes concave hull from Delaunay triangulation |
-| `directional_mean` | `DirectionalMean` — circular mean of line bearings |
-| `distance_weight` | `DistanceWeight` — inverse-distance weight matrix |
-| `moran_index` | `MoranIndex` — spatial autocorrelation (Moran's I) |
-| `nearest_neighbor` | `NearestNeighborAnalysis` — R statistic with z-score and p-value |
-| `polygonize` | `Polygonize` — polygon extraction from linework via graph walk |
-| `quadrat_analysis` | `QuadratAnalysis` — chi-squared quadrat test |
-| `rbush` | `RBush` — flat-array spatial index (insert, search, nearest) |
-| `shortest_path` | `ShortestPath` — Dijkstra shortest path on network graph |
-| `standard_deviational_ellipse` | `StandardDeviationalEllipse` — 2-sigma directional distribution |
-| `turf` (root) | Umbrella re-export of all packages |
+Zero external dependencies. Single Go module. 39 sub-packages covering the full Turf.js v7.3.5 API surface.
 
-## Usage
+</div>
+
+---
+
+## Installation
+
+```bash
+go get github.com/ibinh/go-turf
+```
+
+Requires Go 1.21+.
+
+## Quick Start
 
 ```go
-import "github.com/ibinh/turf-go"
+import turf "github.com/ibinh/go-turf"
 
 // Distance between two points
 from := turf.Point([]float64{-75.343, 39.984})
-to := turf.Point([]float64{-75.534, 39.123})
-d, _ := turf.Distance(from, to, turf.UnitKilometers)
+to   := turf.Point([]float64{-75.534, 39.123})
+km, _ := turf.Distance(from, to, turf.UnitKilometers) // ~97.3 km
 
-// Buffer a point
+// Buffer a point (100 meters)
 buffered, _ := turf.Buffer(from, 100, turf.UnitMeters)
 
-// Polygon boolean ops
-a := turf.Polygon([][][]float64{{{0, 0}, {2, 0}, {2, 2}, {0, 2}, {0, 0}}})
-b := turf.Polygon([][][]float64{{{1, 1}, {3, 1}, {3, 3}, {1, 3}, {1, 1}}})
-union, _ := turf.PolygonUnion(a, b)
+// Point-in-polygon check
+poly := turf.Polygon([][][]float64{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}})
+inside, _ := turf.BooleanPointInPolygon(turf.Point([]float64{5, 5}), poly)
 
-// Isobands (contour polygons)
+// Clip a polygon to a bounding box
+bbox := []float64{0, 0, 5, 5}
+clipped, _ := turf.BBoxClip(poly, bbox)
+
+// Contour lines from point data
 fc := turf.RandomPoint(100)
-bands, _ := turf.Isobands(fc, turf.IsobandsOptions{
+isolines, _ := turf.Isolines(fc, turf.IsolinesOptions{
     ZProperty: "z",
-    Breaks:    []float64{0, 10, 20, 30},
-})
-
-// Isolines (contour lines)
-lines, _ := turf.Isolines(fc, turf.IsolinesOptions{
-    ZProperty: "z",
-    Breaks:    []float64{5, 10, 15},
+    Breaks:    []float64{5, 10, 15, 20},
 })
 ```
+
+## Packages
+
+### Geometry & Types
+| Package | Functions |
+|---------|-----------|
+| `geojson` | RFC 7946 compliant types — `Point`, `LineString`, `Polygon`, `Multi*`, `Feature`, `FeatureCollection`, `GeometryCollection` with constructors, invariants, JSON marshal/unmarshal |
+| `helpers` | `Point()`, `LineString()`, `Polygon()`, `MultiPoint()`, `MultiLineString()`, `MultiPolygon()`, `GeometryCollection()` |
+
+### Measurement
+| Package | Functions |
+|---------|-----------|
+| `measurement` | `Distance` (Haversine/Rhumb), `Bearing`, `Destination`, `Length`, `Area` (geodesic), `Midpoint`, `Along`, `GreatCircle`, `PointToLineDistance`, `NearestPointOnLine`, `Angle`, `ConvertLength` |
+
+### Spatial Analysis
+| Package | Functions |
+|---------|-----------|
+| `boolean` | `Contains`, `Within`, `Intersects`, `Disjoint`, `Touches`, `Crosses`, `Overlap`, `PointInPolygon`, `PointOnLine`, `SegmentIntersect`, `Clockwise`, `Valid`, `Concave`, `BooleanEqual`, `BooleanParallel` |
+| `polyclip` | `PolygonUnion`, `PolygonIntersect`, `PolygonDifference`, `PolygonXor` |
+| `buffer` | `Buffer` — distance-based polygon buffering |
+| `mask` | `Mask` — outer ring with hole masking |
+| `unkink` | `UnkinkPolygon` — fix self-intersecting polygons |
+| `kinks` | `Kinks` — self-intersection detection |
+| `voronoi` | `Voronoi` — Voronoi diagram generation |
+| `centroid` | `Center`, `Centroid`, `CenterMean`, `CenterMedian`, `CenterOfMass`, `PointOnFeature` |
+
+### Transformations
+| Package | Functions |
+|---------|-----------|
+| `transform` | `TransformRotate`, `TransformScale`/`ScaleXY`, `TransformTranslate`, `Flip`, `Rewind`, `Truncate`, `CleanCoords`, `ToMercator`, `ToWGS84` |
+| `simplify` | `Simplify` (Ramer-Douglas-Peucker), `ConvexHull` (Andrew's monotone chain) |
+| `smooth` | `PolygonSmooth` (Chaikin's subdivision) |
+| `convert` | `PolygonToLine`, `LineToPolygon` |
+
+### Lines & Shapes
+| Package | Functions |
+|---------|-----------|
+| `lines` | `LineIntersect`, `LineSegment`, `LineOverlap`, `LineSlice`, `LineSliceAlong`, `LineChunk`, `LineSplit`, `LineArc`, `Sector` |
+| `lineoffset` | `LineOffset` — parallel line with miter joins |
+| `tangents` | `PolygonTangents` — rotating calipers |
+| `shapes` | `Circle`, `Ellipse`, `BezierSpline`, `RandomPoint`, `RandomLineString`, `RandomPolygon`, `RandomPosition` |
+
+### Grids & Statistics
+| Package | Functions |
+|---------|-----------|
+| `grid` | `HexGrid`, `PointGrid`, `SquareGrid`, `TriangleGrid`, `RectangleGrid` |
+| `clusters` | `ClustersKMeans`, `ClustersDbscan`, `Dissolve` |
+| `interpolation` | `Sample`, `Tin` (Delaunay), `Interpolate` (IDW), `PlanarDistance`, `PlanarPointOnLine` |
+| `nearest_neighbor` | `NearestNeighborAnalysis` — R statistic, z-score, p-value |
+| `quadrat_analysis` | `QuadratAnalysis` — chi-squared quadrat test |
+| `moran_index` | `MoranIndex` — spatial autocorrelation (Moran's I) |
+| `directional_mean` | `DirectionalMean` — circular mean of line bearings |
+| `standard_deviational_ellipse` | `StandardDeviationalEllipse` — 2-sigma directional distribution |
+| `distance_weight` | `DistanceWeight` — inverse-distance weight matrix |
+
+### Iterators & Data
+| Package | Functions |
+|---------|-----------|
+| `meta` | `CoordEach`/`Reduce`, `FeatureEach`/`Reduce`, `GeomEach`/`Reduce`, `PropEach`/`Reduce`, `FlattenEach`/`Reduce`, `CoordCount`, `FeatureCount`, `GeomCount` |
+| `data` | `Tag`, `Collect` |
+| `misc` | `Clone`, `Combine`, `Explode`, `Flatten`, `PointsWithinPolygon`, `Planepoint`, `Tesselate` |
+
+### Contours & Surface
+| Package | Functions |
+|---------|-----------|
+| `isobands` | `Isobands` — marching squares contour band polygons |
+| `isolines` | `Isolines` — marching squares contour polylines |
+| `concave` | `ConcaveHull` — alpha-shapes concave hull via Delaunay triangulation |
+| `polygonize` | `Polygonize` — polygon extraction from linework via graph walk |
+
+### Spatial Index & Routing
+| Package | Functions |
+|---------|-----------|
+| `rbush` | `RBush` — flat-array spatial index (`Insert`, `Search`, `Remove`, `Load`, `Collisions`, `Nearest`) |
+| `shortest_path` | `ShortestPath` — Dijkstra shortest path with nearest-node snapping |
+
+### Bounding Box
+| Package | Functions |
+|---------|-----------|
+| `bbox` | `BBox`, `BBoxPolygon`, `Envelope`, `Square`, `BBoxClip` (Sutherland-Hodgman) |
 
 ## Development
 
 ```bash
-make test    # run all tests
-make bench   # benchmarks
-make lint    # golangci-lint
-make cover   # coverage report
-```
+# Run all tests
+make test
 
-Go 1.23+. Run with `GOROOT=/opt/homebrew/opt/go@1.23/libexec go test ./...` if using Homebrew's Go 1.23.
+# Run with race detector and coverage
+make cover
+
+# Benchmarks
+make bench
+
+# Lint
+make lint
+```
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE)

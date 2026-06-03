@@ -69,6 +69,73 @@ func TestHelpersMultiPoint(t *testing.T) {
 	}
 }
 
+func TestHelpersMultiLineString(t *testing.T) {
+	coords := [][]geojson.Position{
+		{{0, 0}, {1, 1}, {2, 2}},
+		{{3, 3}, {4, 4}},
+	}
+	f := MultiLineString(coords, nil)
+	mls, ok := f.Geometry.(*geojson.MultiLineString)
+	if !ok {
+		t.Fatalf("expected *MultiLineString, got %T", f.Geometry)
+	}
+	if len(mls.Coordinates) != 2 {
+		t.Errorf("expected 2 line strings, got %d", len(mls.Coordinates))
+	}
+	if len(mls.Coordinates[0]) != 3 {
+		t.Errorf("expected 3 coords in first line, got %d", len(mls.Coordinates[0]))
+	}
+	if len(mls.Coordinates[1]) != 2 {
+		t.Errorf("expected 2 coords in second line, got %d", len(mls.Coordinates[1]))
+	}
+}
+
+func TestHelpersMultiLineStringWithOptions(t *testing.T) {
+	coords := [][]geojson.Position{
+		{{0, 0}, {1, 1}},
+	}
+	f := MultiLineString(coords, nil, geojson.WithBBox([]float64{0, 0, 1, 1}), geojson.WithID("mls1"))
+	if f.ID != "mls1" {
+		t.Errorf("expected id mls1, got %v", f.ID)
+	}
+	if len(f.BBox()) != 4 {
+		t.Errorf("expected bbox")
+	}
+}
+
+func TestHelpersMultiPolygon(t *testing.T) {
+	ring1 := []geojson.Position{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}
+	ring2 := []geojson.Position{{20, 20}, {20, 30}, {30, 30}, {30, 20}, {20, 20}}
+	coords := [][][]geojson.Position{
+		{ring1},
+		{ring2},
+	}
+	f := MultiPolygon(coords, nil)
+	mp, ok := f.Geometry.(*geojson.MultiPolygon)
+	if !ok {
+		t.Fatalf("expected *MultiPolygon, got %T", f.Geometry)
+	}
+	if len(mp.Coordinates) != 2 {
+		t.Errorf("expected 2 polygons, got %d", len(mp.Coordinates))
+	}
+	if len(mp.Coordinates[0][0]) != 5 {
+		t.Errorf("expected 5 coords in first polygon ring, got %d", len(mp.Coordinates[0][0]))
+	}
+}
+
+func TestHelpersMultiPolygonWithOptions(t *testing.T) {
+	coords := [][][]geojson.Position{
+		{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}},
+	}
+	f := MultiPolygon(coords, nil, geojson.WithBBox([]float64{0, 0, 10, 10}), geojson.WithID("mp1"))
+	if f.ID != "mp1" {
+		t.Errorf("expected id mp1, got %v", f.ID)
+	}
+	if len(f.BBox()) != 4 {
+		t.Errorf("expected bbox")
+	}
+}
+
 func TestHelpersGeometryCollection(t *testing.T) {
 	f := GeometryCollection([]geojson.Geometry{
 		geojson.NewPoint(geojson.Position{1, 2}),

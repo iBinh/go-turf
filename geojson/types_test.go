@@ -298,6 +298,167 @@ func TestPositionAccessors(t *testing.T) {
 	}
 }
 
+func TestWithBBoxAndID(t *testing.T) {
+	f := NewFeature(NewPoint(Position{1, 2}), nil)
+	f.SetBBox([]float64{0, 0, 2, 2})
+	f.ID = "myid"
+	if f.ID != "myid" {
+		t.Errorf("expected id 'myid', got %v", f.ID)
+	}
+	bbox := f.BBox()
+	if len(bbox) != 4 || bbox[0] != 0 || bbox[3] != 2 {
+		t.Errorf("unexpected bbox: %v", bbox)
+	}
+}
+
+func TestWithBBoxHelper(t *testing.T) {
+	f := NewFeature(NewPoint(Position{1, 2}), nil)
+	WithBBox([]float64{0, 0, 2, 2})(f)
+	bbox := f.BBox()
+	if len(bbox) != 4 || bbox[0] != 0 {
+		t.Errorf("unexpected bbox: %v", bbox)
+	}
+}
+
+func TestWithIDHelper(t *testing.T) {
+	f := NewFeature(NewPoint(Position{1, 2}), nil)
+	WithID(42)(f)
+	if f.ID != 42 {
+		t.Errorf("expected id 42, got %v", f.ID)
+	}
+}
+
+func TestGetType(t *testing.T) {
+	p := NewPoint(Position{1, 2})
+	if GetType(p) != TypePoint {
+		t.Errorf("expected Point, got %s", GetType(p))
+	}
+	f := NewFeature(p, nil)
+	if GetType(f) != TypeFeature {
+		t.Errorf("expected Feature, got %s", GetType(f))
+	}
+	fc := NewFeatureCollection(nil)
+	if GetType(fc) != TypeFeatureCollection {
+		t.Errorf("expected FeatureCollection, got %s", GetType(fc))
+	}
+}
+
+func TestGetGeometryNilFeature(t *testing.T) {
+	_, err := GetGeometry(NewFeature(nil, nil))
+	if err == nil {
+		t.Error("expected error for nil geometry")
+	}
+}
+
+func TestGetGeometryInvalidType(t *testing.T) {
+	_, err := GetGeometry("not a geometry")
+	if err == nil {
+		t.Error("expected error for invalid type")
+	}
+}
+
+func TestGetCoordNonPoint(t *testing.T) {
+	ls := NewFeature(NewLineString([]Position{{0, 0}, {1, 1}}), nil)
+	_, err := GetCoord(ls)
+	if err == nil {
+		t.Error("expected error for non-Point geometry")
+	}
+}
+
+func TestCoordAllNilGeometry(t *testing.T) {
+	_, err := CoordAll(NewFeature(nil, nil))
+	if err == nil {
+		t.Error("expected error for nil geometry")
+	}
+}
+
+func TestCoordAllInvalidType(t *testing.T) {
+	_, err := CoordAll("bad")
+	if err == nil {
+		t.Error("expected error for invalid type")
+	}
+}
+
+func TestCoordAllMultiLineString(t *testing.T) {
+	mls := NewMultiLineString([][]Position{{{0, 0}, {1, 1}}, {{2, 2}, {3, 3}}})
+	coords, err := CoordAll(mls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(coords) != 4 {
+		t.Errorf("expected 4 coords, got %d", len(coords))
+	}
+}
+
+func TestCoordAllMultiPolygon(t *testing.T) {
+	mp := NewMultiPolygon([][][]Position{{{{0, 0}, {0, 1}, {1, 1}, {1, 0}, {0, 0}}}})
+	coords, err := CoordAll(mp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(coords) != 5 {
+		t.Errorf("expected 5 coords, got %d", len(coords))
+	}
+}
+
+func TestCoordAllGeometryCollection(t *testing.T) {
+	gc := NewGeometryCollection([]Geometry{
+		NewPoint(Position{1, 2}),
+		NewLineString([]Position{{3, 4}, {5, 6}}),
+	})
+	coords, err := CoordAll(gc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(coords) != 3 {
+		t.Errorf("expected 3 coords, got %d", len(coords))
+	}
+}
+
+func TestCoordAllFCNilGeom(t *testing.T) {
+	fc := NewFeatureCollection([]*Feature{
+		NewFeature(nil, nil),
+		NewFeature(NewPoint(Position{7, 8}), nil),
+	})
+	coords, err := CoordAll(fc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(coords) != 1 {
+		t.Errorf("expected 1 coord (nil skipped), got %d", len(coords))
+	}
+}
+
+func TestCollectionOfNilGeom(t *testing.T) {
+	fc := NewFeatureCollection([]*Feature{
+		NewFeature(NewPoint(Position{0, 0}), nil),
+		NewFeature(nil, nil),
+	})
+	err := CollectionOf(fc, TypePoint)
+	if err == nil {
+		t.Error("expected error for nil geometry feature")
+	}
+}
+
+func TestGetCoordsUnsupported(t *testing.T) {
+	gc := NewGeometryCollection([]Geometry{NewPoint(Position{1, 2})})
+	_, err := GetCoords(gc)
+	if err == nil {
+		t.Error("expected error for GeometryCollection in GetCoords")
+	}
+}
+
+func TestGetGeom(t *testing.T) {
+	f := NewFeature(NewPoint(Position{1, 2}), nil)
+	g, err := GetGeom(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if g.Type() != TypePoint {
+		t.Errorf("expected Point, got %s", g.Type())
+	}
+}
+
 func TestBBox(t *testing.T) {
 	f := NewFeature(NewPoint(Position{1, 2}), nil)
 	f.SetBBox([]float64{0, 0, 2, 2})

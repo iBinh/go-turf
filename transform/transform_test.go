@@ -225,6 +225,207 @@ func TestMercatorRoundtrip(t *testing.T) {
 	}
 }
 
+func TestTransformMultiPoint(t *testing.T) {
+	mp := geojson.NewFeature(geojson.NewMultiPoint([]geojson.Position{{1, 0}, {2, 0}}), nil)
+	rotated, err := TransformRotate(mp, 90, geojson.Position{0, 0})
+	if err != nil {
+		t.Fatal(err)
+	}
+	coords, _ := geojson.GetCoords(rotated)
+	pts := coords.([]geojson.Position)
+	if math.Abs(pts[0][0]) > 0.001 || math.Abs(pts[0][1]-1) > 0.001 {
+		t.Errorf("expected [0,1], got %v", pts[0])
+	}
+}
+
+func TestTransformMultiLineString(t *testing.T) {
+	mls := geojson.NewFeature(geojson.NewMultiLineString([][]geojson.Position{{{0, 0}, {1, 0}}}), nil)
+	scaled, err := TransformScale(mls, 2, geojson.Position{0, 0})
+	if err != nil {
+		t.Fatal(err)
+	}
+	coords, _ := geojson.GetCoords(scaled)
+	lines := coords.([][]geojson.Position)
+	if math.Abs(lines[0][1][0]-2) > 0.001 {
+		t.Errorf("expected x=2, got %f", lines[0][1][0])
+	}
+}
+
+func TestTransformMultiPolygon(t *testing.T) {
+	mp := geojson.NewFeature(geojson.NewMultiPolygon([][][]geojson.Position{{{{0, 0}, {0, 1}, {1, 1}, {1, 0}, {0, 0}}}}), nil)
+	translated, err := TransformTranslate(mp, 10, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	coords, _ := geojson.GetCoords(translated)
+	polygons := coords.([][][]geojson.Position)
+	if math.Abs(polygons[0][0][0][0]-10) > 0.001 {
+		t.Errorf("expected x=10, got %f", polygons[0][0][0][0])
+	}
+}
+
+func TestTransformGeometryCollection(t *testing.T) {
+	gc := geojson.NewFeature(geojson.NewGeometryCollection([]geojson.Geometry{
+		geojson.NewPoint(geojson.Position{1, 0}),
+	}), nil)
+	rotated, err := TransformRotate(gc, 90, geojson.Position{0, 0})
+	if err != nil {
+		t.Fatal(err)
+	}
+	g, err := geojson.GetGeometry(rotated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gc2, ok := g.(*geojson.GeometryCollection)
+	if !ok {
+		t.Fatalf("expected GeometryCollection, got %T", g)
+	}
+	pt := gc2.Geometries[0].(*geojson.Point)
+	if math.Abs(pt.Coordinates[0]) > 0.001 || math.Abs(pt.Coordinates[1]-1) > 0.001 {
+		t.Errorf("expected [0,1], got %v", pt.Coordinates)
+	}
+}
+
+func TestTransformScaleNoPivot(t *testing.T) {
+	poly := geojson.NewFeature(
+		geojson.NewPolygon([][]geojson.Position{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}}),
+		nil,
+	)
+	scaled, err := TransformScale(poly, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	coords, _ := geojson.GetCoords(scaled)
+	rings := coords.([][]geojson.Position)
+	if math.Abs(rings[0][2][0]-16) > 0.001 {
+		t.Errorf("expected x~16, got %f", rings[0][2][0])
+	}
+}
+
+func TestTransformScaleXYNoPivot(t *testing.T) {
+	poly := geojson.NewFeature(
+		geojson.NewPolygon([][]geojson.Position{{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}}),
+		nil,
+	)
+	scaled, err := TransformScaleXY(poly, 2, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	coords, _ := geojson.GetCoords(scaled)
+	rings := coords.([][]geojson.Position)
+	if math.Abs(rings[0][2][0]-16) > 0.001 || math.Abs(rings[0][2][1]-22) > 0.001 {
+		t.Errorf("expected ~[16,22], got %v", rings[0][2])
+	}
+}
+
+func TestTranslateMetersAtPole(t *testing.T) {
+	pt := geojson.NewFeature(geojson.NewPoint(geojson.Position{0, 89}), nil)
+	translated, err := TransformTranslate(pt, 111319.9, 0, &TranslateOptions{Units: "meters"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	coord, _ := geojson.GetCoord(translated)
+	if math.Abs(coord[1]-89) > 0.01 {
+		t.Errorf("expected lat~89, got %f", coord[1])
+	}
+}
+
+func TestCleanCoordsPolygon(t *testing.T) {
+	poly := geojson.NewFeature(
+		geojson.NewPolygon([][]geojson.Position{{{0, 0}, {0, 0}, {1, 1}, {1, 1}, {0, 0}}}),
+		nil,
+	)
+	cleaned, err := CleanCoords(poly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	coords, _ := geojson.GetCoords(cleaned)
+	rings := coords.([][]geojson.Position)
+	if len(rings[0]) != 3 {
+		t.Errorf("expected 3 unique points, got %d", len(rings[0]))
+	}
+}
+
+func TestCleanCoordsMultiPolygon(t *testing.T) {
+	mp := geojson.NewFeature(
+		geojson.NewMultiPolygon([][][]geojson.Position{{{{0, 0}, {0, 0}, {1, 1}, {1, 1}, {0, 0}}}}),
+		nil,
+	)
+	cleaned, err := CleanCoords(mp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = geojson.GetCoords(cleaned)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCleanCoordsPoint(t *testing.T) {
+	pt := geojson.NewFeature(geojson.NewPoint(geojson.Position{1, 2}), nil)
+	cleaned, err := CleanCoords(pt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	coord, _ := geojson.GetCoord(cleaned)
+	if coord[0] != 1 || coord[1] != 2 {
+		t.Errorf("expected [1,2], got %v", coord)
+	}
+}
+
+func TestCleanCoordsMultiPoint(t *testing.T) {
+	mp := geojson.NewFeature(
+		geojson.NewMultiPoint([]geojson.Position{{1, 1}, {1, 1}, {2, 2}}),
+		nil,
+	)
+	cleaned, err := CleanCoords(mp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	coords, _ := geojson.GetCoords(cleaned)
+	pts := coords.([]geojson.Position)
+	if len(pts) != 2 {
+		t.Errorf("expected 2 unique points, got %d", len(pts))
+	}
+}
+
+func TestCleanCoordsMultiLineString(t *testing.T) {
+	mls := geojson.NewFeature(
+		geojson.NewMultiLineString([][]geojson.Position{{{0, 0}, {0, 0}, {1, 1}}}),
+		nil,
+	)
+	cleaned, err := CleanCoords(mls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = geojson.GetCoords(cleaned)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRewindMultiPolygon(t *testing.T) {
+	mp := geojson.NewFeature(
+		geojson.NewMultiPolygon([][][]geojson.Position{{{{0, 0}, {2, 0}, {1, 1}, {0, 0}}}}),
+		nil,
+	)
+	rewound, err := Rewind(mp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g, err := geojson.GetGeometry(rewound)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mpoly, ok := g.(*geojson.MultiPolygon)
+	if !ok {
+		t.Fatalf("expected MultiPolygon")
+	}
+	if !isCWRing(mpoly.Coordinates[0][0]) {
+		t.Error("exterior should be CW after rewind")
+	}
+}
+
 func TestTransformPolygon(t *testing.T) {
 	ring := []geojson.Position{{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}}
 	poly := geojson.NewFeature(
