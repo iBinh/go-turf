@@ -46,9 +46,9 @@ jobs:
           cache: true
       - run: go test ./... -coverprofile=coverage.txt -count=1
       - uses: codecov/codecov-action@v4
-        continue-on-error: true
         with:
           file: ./coverage.txt
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   bench:
     runs-on: ubuntu-latest
