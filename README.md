@@ -2,7 +2,7 @@
 
 **Go port of [Turf.js](https://turfjs.org/)** — a modular geospatial analysis engine.
 
-Zero external dependencies. Single module, 29 sub-packages covering the full Turf.js API surface.
+Zero external dependencies. Single module, 39 sub-packages covering the full Turf.js API surface.
 
 ## Packages
 
@@ -36,6 +36,16 @@ Zero external dependencies. Single module, 29 sub-packages covering the full Tur
 | `misc` | `Clone`, `Combine`, `Explode`, `PointsWithinPolygon`, `Planepoint`, `Tesselate`, `Flatten` |
 | `isobands` | `Isobands` — marching squares contour bands |
 | `isolines` | `Isolines` — marching squares contour lines |
+| `concave` | `ConcaveHull` — alpha-shapes concave hull from Delaunay triangulation |
+| `directional_mean` | `DirectionalMean` — circular mean of line bearings |
+| `distance_weight` | `DistanceWeight` — inverse-distance weight matrix |
+| `moran_index` | `MoranIndex` — spatial autocorrelation (Moran's I) |
+| `nearest_neighbor` | `NearestNeighborAnalysis` — R statistic with z-score and p-value |
+| `polygonize` | `Polygonize` — polygon extraction from linework via graph walk |
+| `quadrat_analysis` | `QuadratAnalysis` — chi-squared quadrat test |
+| `rbush` | `RBush` — flat-array spatial index (insert, search, nearest) |
+| `shortest_path` | `ShortestPath` — Dijkstra shortest path on network graph |
+| `standard_deviational_ellipse` | `StandardDeviationalEllipse` — 2-sigma directional distribution |
 | `turf` (root) | Umbrella re-export of all packages |
 
 ## Usage

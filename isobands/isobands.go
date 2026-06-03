@@ -299,15 +299,16 @@ func connectSegmentsToRings(segs []rawSeg) [][]geojson.Position {
 	var rings [][]geojson.Position
 
 	for len(adj) > 0 {
-		// find start point (prefer an endpoint with degree != 2)
 		var start posKey
+		var foundStart bool
 		for k := range adj {
 			if len(adj[k]) != 2 {
 				start = k
+				foundStart = true
 				break
 			}
 		}
-		if start == (posKey{}) {
+		if !foundStart {
 			for k := range adj {
 				start = k
 				break

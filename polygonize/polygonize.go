@@ -195,9 +195,8 @@ func walkPolygon(start, next position, adj map[position][]position, usedEdges ma
 		usedEdges[key] = true
 		ring = append(ring, geojson.Position{cur.x, cur.y})
 
-		// Find next edge: from prev, take the most clockwise turn
-		nxt := findNextEdge(prev, cur, adj, usedEdges)
-		if nxt == (position{}) {
+		nxt, foundNext := findNextEdge(prev, cur, adj, usedEdges)
+		if !foundNext {
 			break
 		}
 
@@ -218,13 +217,12 @@ func walkPolygon(start, next position, adj map[position][]position, usedEdges ma
 	return ring
 }
 
-func findNextEdge(from, comingFrom position, adj map[position][]position, usedEdges map[string]bool) position {
+func findNextEdge(from, comingFrom position, adj map[position][]position, usedEdges map[string]bool) (position, bool) {
 	neighbors := adj[from]
 	if len(neighbors) == 0 {
-		return position{}
+		return position{}, false
 	}
 
-	// Sort neighbors by clockwise angle from the incoming direction
 	angle := math.Atan2(comingFrom.y-from.y, comingFrom.x-from.x)
 
 	type cand struct {
@@ -238,7 +236,6 @@ func findNextEdge(from, comingFrom position, adj map[position][]position, usedEd
 			continue
 		}
 		a := math.Atan2(nb.y-from.y, nb.x-from.x)
-		// Clockwise difference from incoming angle (negated)
 		diff := angle - a
 		if diff < 0 {
 			diff += 2 * math.Pi
@@ -247,15 +244,14 @@ func findNextEdge(from, comingFrom position, adj map[position][]position, usedEd
 	}
 
 	if len(candidates) == 0 {
-		return position{}
+		return position{}, false
 	}
 
-	// Pick the smallest clockwise angle (most clockwise turn)
 	sort.Slice(candidates, func(i, j int) bool {
 		return candidates[i].angle < candidates[j].angle
 	})
 
-	return candidates[0].nb
+	return candidates[0].nb, true
 }
 
 func ringArea(ring []geojson.Position) float64 {

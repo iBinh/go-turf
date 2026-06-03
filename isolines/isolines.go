@@ -268,15 +268,16 @@ func connectSegmentsToPolylines(segs []rawSeg) [][]geojson.Position {
 	var polylines [][]geojson.Position
 
 	for len(adj) > 0 {
-		// find start: prefer endpoint with degree 1 (open polyline)
 		var start posKey
+		var foundStart bool
 		for k := range adj {
 			if len(adj[k]) == 1 {
 				start = k
+				foundStart = true
 				break
 			}
 		}
-		if start == (posKey{}) {
+		if !foundStart {
 			for k := range adj {
 				start = k
 				break
