@@ -33,6 +33,18 @@ jobs:
       - run: go build ./...
       - run: go vet ./...
       - run: go test ./... -v -race -count=1 -coverprofile=coverage.txt
+
+  codecov:
+    needs: [test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache: true
+      - run: go test ./... -coverprofile=coverage.txt -count=1
       - uses: codecov/codecov-action@v4
         continue-on-error: true
         with:
